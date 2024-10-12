@@ -83,40 +83,9 @@ time.sleep(0.5)
 
 driver.get("https://web9.vghtpe.gov.tw/emr/qemr/qemr.cfm?action=findEmr&histno=50687768")
 soup = BeautifulSoup(driver.page_source, 'html.parser')
-# print(soup)
 
-
-# In[8]:
-
-
-## Get my patient data
-
-# def get_my_patient(driver):
-#     driver.get("https://web9.vghtpe.gov.tw/emr/qemr/qemr.cfm?action=findPatient&srnId=DRWEBAPP&")
-#     soup = BeautifulSoup(driver.page_source, 'html.parser')
-#     header_element = soup.find(id="patlist")
-    
-#     data = []
-#     table = soup.find(id="patlist")
-#     table_body = table.find('tbody')
-    
-#     rows = table_body.find_all('tr')
-#     for row in rows:
-#         cols = row.find_all('td')
-#         cols = [ele.text.strip() for ele in cols]
-#         one_col=[ele for ele in cols if ele]
-#         if "New" in one_col[1]:
-#             one_col[1]=one_col[1][4:]
-#         data.append(one_col) 
-#     return data
-# pat_data=get_my_patient(driver)
-# print(pat_data)
-# time.sleep(2)
 docID=input("燈號(四碼)")
 pat_data=get_serarched_patient(driver,ward="0",patID="",docID=docID)
-
-
-# In[5]:
 
 
 def set_paragraph_spacing(doc, spacing=0):
@@ -160,61 +129,55 @@ def add_table(doc, df):
                 
     for col in table.columns:
         max_length = max(len(cell.text) for cell in col.cells)
-        # You can adjust the multiplier for a better fit
-        col_width = Inches(max_length)  # Adjust factor as needed
+        col_width = Inches(max_length)
         for cell in col.cells:
             cell.width = col_width
 
 def convert_date(date_str):
     date_str=date_str[3:8]
     return date_str
-def add_line(doc):
-    doc.add_paragraph("-------------------------------------------------------------------------------------------------")
 
-def generate_report(driver,doc, ID):
+def add_line(doc):
+    doc.add_paragraph("-------------------------------")
+
+
+
+def generate_table_report(driver,doc, ID, row_cells,pat):
     print(ID)
     
-    # BW_BL=get_BW_BL(driver,ID)
-    # time.sleep(0.1)
-    
-    
-    # get_last_admission(driver,ID)
-    
-    # get_res_report(driver,ID)
-    
-    # reportname, report=get_recent_report(driver, ID, report_num=5)
+    info_cell=row_cells[0]
+    paragraph = info_cell.paragraphs[0]
+    paragraph.add_run("\n".join(pat))
 
-    # 添加標題
-    
-    # 設置最小行高
     try:
         TPR=get_TPR(driver,ID)
         time.sleep(3*random.random())
-        doc.add_paragraph(" |".join(list(TPR[["體溫","心跳","呼吸","收縮壓","舒張壓"]].iloc[0])))
+        run=paragraph.add_run("\n")
+        paragraph.add_run("\n".join(list(TPR[["體溫","心跳","呼吸","收縮壓","舒張壓"]].iloc[0])))
+        
     except:
         pass
     
-    # 添加圖片
-    # try:
-    #     TPR_img=get_TPR_img(driver,ID)
-    #     time.sleep(3*random.random())
-    #     image_path = 'temp_image.png'
-    #     TPR_img.save(image_path)
-    #     doc.add_picture(image_path, width=Inches(3))  # 插入圖片
-    #     os.remove(image_path)
-    # except:
-    #     pass
+    try:
+        run=paragraph.add_run()
+        TPR_img=get_TPR_img(driver,ID)
+        time.sleep(3*random.random())
+        image_path = 'temp_image.png'
+        TPR_img.save(image_path)
+        run.add_picture(image_path, width=Inches(1))  # 插入圖片
+        os.remove(image_path)
+    except:
+        pass
 
-
-    # progress_note=get_progress_note(driver,ID,num=5)
-    # time.sleep(3*random.random())
-    # print(len(progress_note))
-    # for i in range(len(progress_note)):
-    #     assessment=progress_note[i]["Assessment"]
-    #     if len(assessment)>5:
-    #         break
-    # doc.add_paragraph(assessment).paragraph_format.line_spacing = Pt(0)  # 
-
+    try:
+        BW_BL=get_BW_BL(driver,ID, adminID="all")
+        BW_BL=BW_BL[["身高","體重"]]
+        add_table(info_cell, BW_BL.head(2) )
+    except:
+        pass
+ 
+    assessment_cell=row_cells[1]
+    paragraph = assessment_cell.paragraphs[0]
     try:
         progress_note=get_progress_note(driver,ID,num=5)
         time.sleep(3*random.random())
@@ -223,31 +186,26 @@ def generate_report(driver,doc, ID):
             assessment=progress_note[i]["Assessment"]
             if len(assessment)>5:
                 break
-        doc.add_paragraph(assessment).paragraph_format.line_spacing = Pt(0)  # 
+        paragraph.add_run(assessment)
     except:
         pass
 
-    add_line(doc)
-
+    Lab_cells = row_cells[2]
     try:
         patIO=get_drainage(driver, ID)
-        add_table(doc,patIO)
-        add_line(doc)
+        add_table(Lab_cells,patIO[["項目","總量"]])
+        # add_line(Lab_cells)
     except:
         pass
     
-
-    # add_table(doc, BW_BL[["身高","體重"]] )
-    # add_line(doc)
 
     try:
         report_num=3
         report_name,recent_report=get_recent_report(driver, ID, report_num=report_num)
         time.sleep(3*random.random())
         for i in range(report_num):
-            doc.add_paragraph(report_name[i])
+            Lab_cells.add_paragraph(report_name[i])
             # add_table(doc, recent_report[report_name[i]])
-        add_line(doc)
     except:
         pass
 
@@ -256,12 +214,9 @@ def generate_report(driver,doc, ID):
         SMAC=get_res_report(driver,ID,resdtype="SMAC")
         SMAC["日期"]=SMAC["日期"].apply(convert_date)
         SMAC=SMAC[["日期","NA","K","BUN","CREA","ALT","BILIT","CRP"]]
-        SMAC = SMAC.loc[~(SMAC[["NA","K","BUN","CREA","ALT","BILIT","CRP"]] == '-').all(axis=1)]
-
+        SMAC = SMAC.loc[~(SMAC[["日期","NA","K","BUN","CREA","ALT","BILIT","CRP"]] == '-').all(axis=1)]
         time.sleep(3*random.random())
-
-        add_table(doc, SMAC.tail(3) )
-        add_line(doc)
+        add_table(Lab_cells, SMAC.tail(3) )
     except:
         pass
 
@@ -270,34 +225,26 @@ def generate_report(driver,doc, ID):
         time.sleep(3*random.random())
         CBC["日期"]=CBC["日期"].apply(convert_date)
         CBC=CBC[["日期","WBC","HGB","PLT",'SEG', 'PT', 'APTT']]
-        CBC = CBC.loc[~(CBC[["WBC","HGB","PLT",'SEG', 'PT', 'APTT']] == '-').all(axis=1)]
-
-        add_table(doc, CBC.tail(3) )
-        add_line(doc)
+        CBC = CBC.loc[~(CBC[["日期","WBC","HGB","PLT",'SEG', 'PT', 'APTT']] == '-').all(axis=1)]
+        add_table(Lab_cells, CBC.tail(3) )
+        # add_line(Lab_cells)
     except:
         pass
 
     
-    # add_table(doc, report[reportname[3]] )
-    # doc.add_paragraph("-----------------------------------------------------------")
+    
     try:
         drug=get_drug(driver,ID)
         time.sleep(3*random.random())
-        add_table(doc, drug[drug["狀態"]=="使用中"][["學名","劑量","途徑","頻次","開始日"] ])
+        add_table(Lab_cells, drug[drug["狀態"]=="使用中"][["學名","劑量","途徑","頻次","開始日"] ])
     except:
         pass
-    doc.add_paragraph("==========================================================")
-
 
 doc = Document()
-# set two column
-
 
 section = doc.sections[0]
-# section.orientation = 1
-sectPr = section._sectPr
-cols = sectPr.xpath('./w:cols')[0]
-cols.set(qn('w:num'),'2')
+
+section.orientation = 1
 
 # 設定邊界
 section.top_margin = Pt(30)   # 0.5 inch
@@ -310,19 +257,30 @@ paragraph=header.paragraphs[0]
 run = paragraph.add_run("日期:"+datetime.now().strftime('%Y-%m-%d')+" 醫師: "+docID)
 run.font.size = Pt(10)
 
+table = doc.add_table(rows=1, cols=3)
+table.style = 'Table Grid'
 
-from patientIO import *
-    
+hdr_cells = table.rows[0].cells
+hdr_cells[0].text = '病人資料'
+hdr_cells[1].text = 'Assessment'
+hdr_cells[2].text = 'Lab Data+drug'
+for cell in hdr_cells:
+    set_font_size(cell, 8)
+
 
 for pat in pat_data:
-    paragraph =doc.add_paragraph()
-    run = paragraph.add_run('/'.join(pat))
-    run.bold = True
-    run.underline = True
+    row_cells = table.add_row().cells
     ID=pat[1]
+    generate_table_report(driver=driver,doc=doc, ID=ID, row_cells=row_cells,pat=pat)
+    for cell in row_cells:
+        set_font_size(cell, 8)
 
-    generate_report(driver=driver,doc=doc,ID=ID)
-
+for col in table.columns:
+    max_length = max(len(cell.text) for cell in col.cells)
+    # You can adjust the multiplier for a better fit
+    col_width = Inches(max_length)  # Adjust factor as needed
+    for cell in col.cells:
+        cell.width = col_width
 
 
 # 設置所有文本字體為 8 號
