@@ -31,7 +31,7 @@ from PIL import Image
 from docx.oxml.ns import qn
 import os
 from Self_function import *
-from datetime import datetime
+from datetime import datetime, timedelta
 import pwinput
 
 # 配置 WebDriver
@@ -168,6 +168,8 @@ def add_table(doc, df):
 def convert_date(date_str):
     date_str=date_str[3:8]
     return date_str
+def add_line(doc):
+    doc.add_paragraph("-------------------------------------------------------------------------------------------------")
 
 def generate_report(driver,doc, ID):
     print(ID)
@@ -203,6 +205,16 @@ def generate_report(driver,doc, ID):
     # except:
     #     pass
 
+
+    # progress_note=get_progress_note(driver,ID,num=5)
+    # time.sleep(3*random.random())
+    # print(len(progress_note))
+    # for i in range(len(progress_note)):
+    #     assessment=progress_note[i]["Assessment"]
+    #     if len(assessment)>5:
+    #         break
+    # doc.add_paragraph(assessment).paragraph_format.line_spacing = Pt(0)  # 
+
     try:
         progress_note=get_progress_note(driver,ID,num=5)
         time.sleep(3*random.random())
@@ -215,34 +227,41 @@ def generate_report(driver,doc, ID):
     except:
         pass
 
-    
-    doc.add_paragraph("-----------------------------------------------------------")
+    add_line(doc)
+
     try:
-        patIO=get_IO(driver, ID)
+        patIO=get_drainage(driver, ID)
         add_table(doc,patIO)
+        add_line(doc)
     except:
         pass
-    doc.add_paragraph("-----------------------------------------------------------")
+    
 
     # add_table(doc, BW_BL[["身高","體重"]] )
-    # doc.add_paragraph("-----------------------------------------------------------")
-    # try:
-    #     report_num=3
-    #     report_name,recent_report=get_recent_report(driver, ID, report_num=report_num)
-    #     time.sleep(3*random.random())
-    #     for i in range(report_num):
-    #         doc.add_paragraph(report_name[i])
-    #         add_table(doc, recent_report[report_name[i]])
-    #         doc.add_paragraph("-----------------------------------------------------------")
-    # except:
-    #     pass
+    # add_line(doc)
+
+    try:
+        report_num=3
+        report_name,recent_report=get_recent_report(driver, ID, report_num=report_num)
+        time.sleep(3*random.random())
+        for i in range(report_num):
+            doc.add_paragraph(report_name[i])
+            # add_table(doc, recent_report[report_name[i]])
+        add_line(doc)
+    except:
+        pass
+
 
     try:
         SMAC=get_res_report(driver,ID,resdtype="SMAC")
         SMAC["日期"]=SMAC["日期"].apply(convert_date)
+        SMAC=SMAC[["日期","NA","K","BUN","CREA","ALT","BILIT","CRP"]]
+        SMAC = SMAC.loc[~(SMAC[["NA","K","BUN","CREA","ALT","BILIT","CRP"]] == '-').all(axis=1)]
+
         time.sleep(3*random.random())
-        add_table(doc, SMAC[["日期","NA","K","BUN","CREA","ALT","BILIT","CRP"]] )
-        doc.add_paragraph("-----------------------------------------------------------")
+
+        add_table(doc, SMAC.tail(3) )
+        add_line(doc)
     except:
         pass
 
@@ -250,8 +269,11 @@ def generate_report(driver,doc, ID):
         CBC=get_res_report(driver,ID,resdtype="CBC")
         time.sleep(3*random.random())
         CBC["日期"]=CBC["日期"].apply(convert_date)
-        add_table(doc, CBC[["日期","WBC","HGB","PLT",'BAND', 'SEG', 'LYM']] )
-        doc.add_paragraph("-----------------------------------------------------------")
+        CBC=CBC[["日期","WBC","HGB","PLT",'SEG', 'PT', 'APTT']]
+        CBC = CBC.loc[~(CBC[["WBC","HGB","PLT",'SEG', 'PT', 'APTT']] == '-').all(axis=1)]
+
+        add_table(doc, CBC.tail(3) )
+        add_line(doc)
     except:
         pass
 
@@ -264,12 +286,15 @@ def generate_report(driver,doc, ID):
         add_table(doc, drug[drug["狀態"]=="使用中"][["學名","劑量","途徑","頻次","開始日"] ])
     except:
         pass
-    doc.add_paragraph("=================================================")
+    doc.add_paragraph("==========================================================")
 
 
 doc = Document()
 # set two column
+
+
 section = doc.sections[0]
+# section.orientation = 1
 sectPr = section._sectPr
 cols = sectPr.xpath('./w:cols')[0]
 cols.set(qn('w:num'),'2')
@@ -295,7 +320,6 @@ for pat in pat_data:
     run.bold = True
     run.underline = True
     ID=pat[1]
-    print(ID)
 
     generate_report(driver=driver,doc=doc,ID=ID)
 

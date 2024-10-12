@@ -7,6 +7,7 @@ from selenium.webdriver.chrome.options import Options
 import pandas as pd
 from bs4 import BeautifulSoup
 import time
+from datetime import datetime, timedelta
 
 from io import BytesIO
 from PIL import Image
@@ -142,6 +143,7 @@ def html_res_table(table):
     for row in rows[:-1]:
         cols = row.find_all('td')
         cols = [ele.text.strip() for ele in cols]
+        
         # one_col=[ele for ele in cols if ele]
         data.append(cols)
     # print(data, len(t_head))
@@ -169,8 +171,13 @@ def get_res_report(driver, ID, resdtype="SMAC", resdtmonth="00"):
 
 def get_progress_note(driver,ID,num=1):
     adminID=get_adminID(driver,ID)
-    driver.get("https://web9.vghtpe.gov.tw/emr/qemr/qemr.cfm?action=findPrg&histno="+ID+"&caseno="+adminID+"&prgpart=409")
+    driver.get("https://web9.vghtpe.gov.tw/emr/qemr/qemr.cfm?action=findPrg&histno="+ID+"&caseno="+adminID)
     soup = BeautifulSoup(driver.page_source, 'html.parser')
+    note_url=soup.find("a")["href"]
+    root_url="https://web9.vghtpe.gov.tw/"
+    driver.get(root_url+note_url)
+    soup = BeautifulSoup(driver.page_source, 'html.parser')
+
     table=soup.find("table")
     table_body=table.find('tbody')
     rows = table_body.find_all('tr')
@@ -179,14 +186,18 @@ def get_progress_note(driver,ID,num=1):
     
     prog_note_list=[]
     for i in range(num):
-        a_note=rows[i*13:(i+1)*13]
-        progress_note={}
-        progress_note["date"]=a_note[0].text
-        progress_note["Description"]=a_note[2].pre.text
-        progress_note["Subjective"]=a_note[4].pre.text
-        progress_note["Objective"]=a_note[6].pre.text
-        progress_note["Assessment"]=a_note[8].pre.text
-        progress_note["Plan"]=a_note[10].pre.text
+        try:
+            a_note=rows[i*13:(i+1)*13]
+            progress_note={}
+            progress_note["date"]=a_note[0].text
+            progress_note["Description"]=a_note[2].pre.text
+            progress_note["Subjective"]=a_note[4].pre.text
+            progress_note["Objective"]=a_note[6].pre.text
+            progress_note["Assessment"]=a_note[8].pre.text
+            progress_note["Plan"]=a_note[10].pre.text
+            
+        except:
+            pass
         prog_note_list.append(progress_note)
     
     
@@ -296,3 +307,52 @@ def get_serarched_patient(driver,ward="0",patID="",docID=""):
         data.append(cols) 
         # df = pd.DataFrame(data,columns=t_head)
     return data
+
+# ================================================
+# get Drainage (IO)
+def html_IO_table(table):
+    data=[]
+
+    table_body = table.find('tbody')
+    rows = table_body.find_all('tr')
+    # for idx,row in enumerate(rows):
+    #     print(idx,row)
+    drainage=rows[58]
+    
+    drainage_table=drainage.find('table')
+    drainage_table=drainage_table.find('tbody')
+    drainage_rows = drainage_table.find_all('tr')
+
+    drainage_data=[]
+    for drainage_row in drainage_rows:
+        cols = drainage_row.find_all('td')
+        cols = [ele.text.strip() for ele in cols]
+        drainage_data.append(cols)
+    # print(drainage_data)
+    df = pd.DataFrame(drainage_data,columns=["項目","白班","小夜","大夜","總量"])
+
+    # for row in rows:
+    #  cols = row.find_all('td')
+    #  cols = [ele.text.strip() for ele in cols]
+    #  one_col=[ele for ele in cols if ele]
+    #  # if \"New\" in one_col[1]:
+    #  #     one_col[1]=one_col[1][4:]\
+    #  one_col=one_col[0:5]
+    #  # print(one_col)
+    #  if not one_col==[]:
+    #      data.append(one_col) # Get rid of empty values
+    # df = pd.DataFrame(data[1:],columns=data[0])
+    return df
+
+
+def get_drainage(driver, ID):
+    adminID=get_adminID(driver,ID)
+    driver.get("https://web9.vghtpe.gov.tw/emr/qemr/qemr.cfm?action=goNIS&hisid="+ID+"&caseno="+adminID)
+    date=(datetime.now() - timedelta(1)).strftime('%Y%m%d')
+    # date="20240924"
+    driver.get("https://web9.vghtpe.gov.tw/NIS/report/IORpt/details.do?gaugeDate1="+date)
+    soup = BeautifulSoup(driver.page_source, 'html.parser')
+    soup=soup.find(id="divshow_0")
+    IOtable=soup.table.table.findAll('table')[1]
+    df=html_IO_table(IOtable)
+    return df
