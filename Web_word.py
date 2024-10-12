@@ -193,15 +193,15 @@ def generate_report(driver,doc, ID):
         pass
     
     # 添加圖片
-    try:
-        TPR_img=get_TPR_img(driver,ID)
-        time.sleep(3*random.random())
-        image_path = 'temp_image.png'
-        TPR_img.save(image_path)
-        doc.add_picture(image_path, width=Inches(3))  # 插入圖片
-        os.remove(image_path)
-    except:
-        pass
+    # try:
+    #     TPR_img=get_TPR_img(driver,ID)
+    #     time.sleep(3*random.random())
+    #     image_path = 'temp_image.png'
+    #     TPR_img.save(image_path)
+    #     doc.add_picture(image_path, width=Inches(3))  # 插入圖片
+    #     os.remove(image_path)
+    # except:
+    #     pass
 
     try:
         progress_note=get_progress_note(driver,ID,num=5)
@@ -217,18 +217,25 @@ def generate_report(driver,doc, ID):
 
     
     doc.add_paragraph("-----------------------------------------------------------")
-    # add_table(doc, BW_BL[["身高","體重"]] )
-    # doc.add_paragraph("-----------------------------------------------------------")
     try:
-        report_num=3
-        report_name,recent_report=get_recent_report(driver, ID, report_num=report_num)
-        time.sleep(3*random.random())
-        for i in range(report_num):
-            doc.add_paragraph(report_name[i])
-            add_table(doc, recent_report[report_name[i]])
-            doc.add_paragraph("-----------------------------------------------------------")
+        patIO=get_IO(driver, ID)
+        add_table(doc,patIO)
     except:
         pass
+    doc.add_paragraph("-----------------------------------------------------------")
+
+    # add_table(doc, BW_BL[["身高","體重"]] )
+    # doc.add_paragraph("-----------------------------------------------------------")
+    # try:
+    #     report_num=3
+    #     report_name,recent_report=get_recent_report(driver, ID, report_num=report_num)
+    #     time.sleep(3*random.random())
+    #     for i in range(report_num):
+    #         doc.add_paragraph(report_name[i])
+    #         add_table(doc, recent_report[report_name[i]])
+    #         doc.add_paragraph("-----------------------------------------------------------")
+    # except:
+    #     pass
 
     try:
         SMAC=get_res_report(driver,ID,resdtype="SMAC")
@@ -279,13 +286,20 @@ run = paragraph.add_run("日期:"+datetime.now().strftime('%Y-%m-%d')+" 醫師: 
 run.font.size = Pt(10)
 
 
+from patientIO import *
+    
+
 for pat in pat_data:
     paragraph =doc.add_paragraph()
     run = paragraph.add_run('/'.join(pat))
     run.bold = True
     run.underline = True
     ID=pat[1]
+    print(ID)
+
     generate_report(driver=driver,doc=doc,ID=ID)
+
+
 
 # 設置所有文本字體為 8 號
 set_font_size(doc, 8)
