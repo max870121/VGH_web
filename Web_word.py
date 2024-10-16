@@ -27,6 +27,7 @@ import random
 import pandas as pd
 from docx import Document
 from docx.shared import Pt, Inches
+from docx.enum.section import WD_ORIENT
 from PIL import Image
 from docx.oxml.ns import qn
 import os
@@ -109,7 +110,7 @@ def add_table(doc, df):
         hdr_cells[i].text = str(column_name)
         for paragraph in hdr_cells[i].paragraphs:
             for run in paragraph.runs:
-                run.font.size = Pt(8)
+                run.font.size = Pt(6)
             paragraph.paragraph_format.line_spacing = Pt(0)
             paragraph.paragraph_format.space_before = Pt(0)
             paragraph.paragraph_format.space_after = Pt(0)
@@ -122,7 +123,7 @@ def add_table(doc, df):
             row_cells[i].text = str(value)
             for paragraph in row_cells[i].paragraphs:
                 for run in paragraph.runs:
-                    run.font.size = Pt(8)
+                    run.font.size = Pt(6)
                 paragraph.paragraph_format.line_spacing = Pt(0)
                 paragraph.paragraph_format.space_before = Pt(0)
                 paragraph.paragraph_format.space_after = Pt(0)
@@ -140,6 +141,10 @@ def convert_date(date_str):
 def add_line(doc):
     doc.add_paragraph("-------------------------------")
 
+def convert_drug(data_drug):
+    data_drug=data_drug.split(" ")[:2]
+    data_drug=" ".join(data_drug)
+    return data_drug
 
 
 def generate_table_report(driver,doc, ID, row_cells,pat):
@@ -191,6 +196,7 @@ def generate_table_report(driver,doc, ID, row_cells,pat):
         pass
 
     Lab_cells = row_cells[2]
+
     try:
         patIO=get_drainage(driver, ID)
         add_table(Lab_cells,patIO[["項目","總量"]])
@@ -232,9 +238,18 @@ def generate_table_report(driver,doc, ID, row_cells,pat):
         pass
 
     
-    
     try:
+
+        def convert_drug(data_drug):
+            data_drug=data_drug.split(" ")[:2]
+            data_drug=" ".join(data_drug)
+            return data_drug
+        def convert_drug_date(data_drug_date):
+            data_drug_date=data_drug_date[5:10]
+            return data_drug_date
         drug=get_drug(driver,ID)
+        drug["學名"]=drug["學名"].apply(convert_drug)
+        drug["開始日"]=drug["開始日"].apply(convert_drug_date)
         time.sleep(3*random.random())
         add_table(Lab_cells, drug[drug["狀態"]=="使用中"][["學名","劑量","途徑","頻次","開始日"] ])
     except:
@@ -242,9 +257,13 @@ def generate_table_report(driver,doc, ID, row_cells,pat):
 
 doc = Document()
 
-section = doc.sections[0]
 
-section.orientation = 1
+
+section = doc.sections[0]
+new_width, new_height = section.page_height, section.page_width
+section.orientation = WD_ORIENT.LANDSCAPE
+section.page_width=new_width
+section.page_height=new_height
 
 # 設定邊界
 section.top_margin = Pt(30)   # 0.5 inch
@@ -255,7 +274,7 @@ section.right_margin = Pt(30)  # 0.5 inch
 header = section.header
 paragraph=header.paragraphs[0]
 run = paragraph.add_run("日期:"+datetime.now().strftime('%Y-%m-%d')+" 醫師: "+docID)
-run.font.size = Pt(10)
+run.font.size = Pt(6)
 
 table = doc.add_table(rows=1, cols=3)
 table.style = 'Table Grid'
@@ -265,7 +284,7 @@ hdr_cells[0].text = '病人資料'
 hdr_cells[1].text = 'Assessment'
 hdr_cells[2].text = 'Lab Data+drug'
 for cell in hdr_cells:
-    set_font_size(cell, 8)
+    set_font_size(cell, 6)
 
 
 for pat in pat_data:
@@ -273,18 +292,19 @@ for pat in pat_data:
     ID=pat[1]
     generate_table_report(driver=driver,doc=doc, ID=ID, row_cells=row_cells,pat=pat)
     for cell in row_cells:
-        set_font_size(cell, 8)
+        set_font_size(cell, 6)
 
-for col in table.columns:
+for idx,col in enumerate(table.columns):
     max_length = max(len(cell.text) for cell in col.cells)
-    # You can adjust the multiplier for a better fit
-    col_width = Inches(max_length)  # Adjust factor as needed
+    col_width = Inches(max_length)
+    if idx==2:
+        col_width = Inches(max_length*0.8)
     for cell in col.cells:
         cell.width = col_width
 
 
-# 設置所有文本字體為 8 號
-set_font_size(doc, 8)
+# 設置所有文本字體為 6 號
+set_font_size(doc, 6)
 set_paragraph_spacing(doc, spacing=0)
 
 # 保存 Word 文件

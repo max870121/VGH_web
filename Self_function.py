@@ -269,16 +269,17 @@ def get_recent_report(driver, ID, report_num=3):
         Report_name=report.text
         print(Report_name)
         report_name_list.append(Report_name)
-        report_url=report["href"]
-        time.sleep(random.random()*2)
-        driver.get(root_url+report_url)
+        # report_url=report["href"]
+        # time.sleep(random.random()*2)
+        # driver.get(root_url+report_url)
         
         
-        soup = BeautifulSoup(driver.page_source, 'html.parser')
-        report_res=soup.find(id="RSCONTENT")
-        table=report_res.find("table")
-        table=html_report_table(table)
-        fin_report[Report_name]=table
+        # soup = BeautifulSoup(driver.page_source, 'html.parser')
+        # report_res=soup.find(id="RSCONTENT")
+        # table=report_res.find("table")
+        # table=html_report_table(table)
+        # fin_report[Report_name]=table
+        fin_report=None
     return report_name_list, fin_report
 
 # ============================================
@@ -315,21 +316,27 @@ def html_IO_table(table):
 
     table_body = table.find('tbody')
     rows = table_body.find_all('tr')
-    # for idx,row in enumerate(rows):
-    #     print(idx,row)
-    drainage=rows[58]
-    
-    drainage_table=drainage.find('table')
-    drainage_table=drainage_table.find('tbody')
-    drainage_rows = drainage_table.find_all('tr')
+    for idx,row in enumerate(rows):
 
-    drainage_data=[]
-    for drainage_row in drainage_rows:
-        cols = drainage_row.find_all('td')
-        cols = [ele.text.strip() for ele in cols]
-        drainage_data.append(cols)
-    # print(drainage_data)
-    df = pd.DataFrame(drainage_data,columns=["項目","白班","小夜","大夜","總量"])
+        if row.find('td').text=="引流":
+            # print(idx,row)
+            drainage=row
+            break
+    
+    try:
+        drainage_table=drainage.find('table')
+        drainage_table=drainage_table.find('tbody')
+        drainage_rows = drainage_table.find_all('tr')
+
+        drainage_data=[]
+        for drainage_row in drainage_rows:
+            cols = drainage_row.find_all('td')
+            cols = [ele.text.strip() for ele in cols]
+            drainage_data.append(cols)
+        # print(drainage_data)
+        df = pd.DataFrame(drainage_data,columns=["項目","白班","小夜","大夜","總量"])
+    except:
+        df=None
 
     # for row in rows:
     #  cols = row.find_all('td')
