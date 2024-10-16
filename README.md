@@ -86,7 +86,7 @@ This is an example of how you may give instructions on setting up your project l
 To get a local copy up and running follow these simple example steps.
 
 ### Prerequisites
-1. Get python
+1. Get [python](https://www.python.org/downloads/windows/)，並加python 加到path
 2. 升級chrome到最新版
 3. 本repositories，含有一個chrome driver，若與您電腦的chrome driver 不匹配，請下載與chrome版本對應的[chrome driver](https://googlechromelabs.github.io/chrome-for-testing/)
 
