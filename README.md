@@ -87,7 +87,9 @@ This is an example of how you may give instructions on setting up your project l
 To get a local copy up and running follow these simple example steps.
 
 ### Prerequisites
-Get python
+1. Get python
+2. 升級chrome到最新版
+3. 下載與chrome版本對應的[chrome driver](https://googlechromelabs.github.io/chrome-for-testing/)
 
 
 ### Installation
@@ -96,9 +98,14 @@ Get python
    ```sh
    git clone https://github.com/max870121/VGH_web.git
    ```
-3. Install requirements.txt
+2. Install requirements.txt
    ```sh
    pip install -r requirements.txt 
+   ```
+3. 升級 chrome到最新版
+4. Start using app
+   ```sh
+   python Web_word.py
    ```
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
@@ -111,6 +118,7 @@ Get python
 1. 打帳號
 2. 打密碼
 3. 打需要產生摘要的醫師燈號 (4碼)
+4. 會在相同的資料夾產生[醫師燈號].docx
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
