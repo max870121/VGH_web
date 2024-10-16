@@ -70,8 +70,7 @@
 ## About The Project
 
 網路爬蟲可以自動爬取資料，並生成word 的查房摘要
-如果需要執行檔請使用連結:
-<a href="https://drive.google.com/file/d/11vbGRvIwuqfI7FX52tNEwV8sSogalw0e/view?usp=sharing">執行檔連結</a>
+如果需要執行檔請使用連結:[執行檔連結](https://drive.google.com/file/d/11vbGRvIwuqfI7FX52tNEwV8sSogalw0e/view?usp=sharing)
 
 ***注意***
 如果病人太多，可能會使資訊室擋IP，導致該電腦暫時無法登入系統，請重新開機過一會再試試
@@ -89,7 +88,7 @@ To get a local copy up and running follow these simple example steps.
 ### Prerequisites
 1. Get python
 2. 升級chrome到最新版
-3. 下載與chrome版本對應的[chrome driver](https://googlechromelabs.github.io/chrome-for-testing/)
+3. 本repositories，含有一個chrome driver，若與您電腦的chrome driver 不匹配，請下載與chrome版本對應的[chrome driver](https://googlechromelabs.github.io/chrome-for-testing/)
 
 
 ### Installation
@@ -102,8 +101,7 @@ To get a local copy up and running follow these simple example steps.
    ```sh
    pip install -r requirements.txt 
    ```
-3. 升級 chrome到最新版
-4. Start using app
+3. Start using app
    ```sh
    python Web_word.py
    ```
@@ -118,7 +116,7 @@ To get a local copy up and running follow these simple example steps.
 1. 打帳號
 2. 打密碼
 3. 打需要產生摘要的醫師燈號 (4碼)
-4. 會在相同的資料夾產生[醫師燈號].docx
+4. 會在相同的資料夾產生 醫師燈號.docx
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -128,9 +126,6 @@ To get a local copy up and running follow these simple example steps.
 
 - [x] Make table
 - [ ] Auto generate admission note
-
-
-See the [open issues](https://github.com/othneildrew/Best-README-Template/issues) for a full list of proposed features (and known issues).
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -152,8 +147,6 @@ Don't forget to give the project a star! Thanks again!
 
 ### Top contributors:
 
-
-
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
@@ -162,34 +155,29 @@ Don't forget to give the project a star! Thanks again!
 ## License
 
 Distributed under the MIT License. See `LICENSE.txt` for more information.
-
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
 
 <!-- CONTACT -->
 ## Contact
-
-DOC8375K - PHS: 898375
-
+DOC8375K - PHS: 8#8375
 Project Link: [[https://github.com/max870121/VGH_web.git](https://github.com/max870121/VGH_web.git)]
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
-
 
 
 <!-- ACKNOWLEDGMENTS -->
 ## Acknowledgments
 
-Use this space to list resources you find helpful and would like to give credit to. I've included a few of my favorites to kick things off!
 
-* [Choose an Open Source License](https://choosealicense.com)
-* [GitHub Emoji Cheat Sheet](https://www.webpagefx.com/tools/emoji-cheat-sheet)
-* [Malven's Flexbox Cheatsheet](https://flexbox.malven.co/)
-* [Malven's Grid Cheatsheet](https://grid.malven.co/)
-* [Img Shields](https://shields.io)
-* [GitHub Pages](https://pages.github.com)
-* [Font Awesome](https://fontawesome.com)
-* [React Icons](https://react-icons.github.io/react-icons/search)
+>* [Choose an Open Source License](https://choosealicense.com)
+>* [GitHub Emoji Cheat Sheet](https://www.webpagefx.com/tools/emoji-cheat-sheet)
+>* [Malven's Flexbox Cheatsheet](https://flexbox.malven.co/)
+>* [Malven's Grid Cheatsheet](https://grid.malven.co/)
+>* [Img Shields](https://shields.io)
+>* [GitHub Pages](https://pages.github.com)
+>* [Font Awesome](https://fontawesome.com)
+>* [React Icons](https://react-icons.github.io/react-icons/search)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
