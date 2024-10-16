@@ -31,7 +31,6 @@
 
 <!-- PROJECT LOGO -->
   <h3 align="center">自動產生查房筆記</h3>
-
   <p align="center">
     自動抓取資料並產生查房筆記
   </p>
