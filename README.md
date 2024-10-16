@@ -173,7 +173,7 @@ Distributed under the MIT License. See `LICENSE.txt` for more information.
 <!-- CONTACT -->
 ## Contact
 
-doc8375k -  - max870121@gmail.com
+DOC8375K - PHS: 898375
 
 Project Link: [https://github.com/your_username/repo_name](https://github.com/your_username/repo_name)
 
