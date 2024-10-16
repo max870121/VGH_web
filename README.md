@@ -167,8 +167,7 @@ Distributed under the MIT License. See `LICENSE.txt` for more information.
 
 DOC8375K - PHS: 898375
 
-Project Link: [[https://github.com/your_username/repo_name](https://github.com/max870121/VGH_web.git)
-]
+Project Link: [[https://github.com/your_username/repo_name](https://github.com/max870121/VGH_web.git)]
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
