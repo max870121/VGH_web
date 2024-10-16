@@ -69,8 +69,6 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-[![Product Name Screen Shot][product-screenshot]](https://example.com)
-
 網路爬蟲可以自動爬取資料，並生成word 的查房摘要
 如果需要執行檔請使用連結:
 <a href="https://drive.google.com/file/d/11vbGRvIwuqfI7FX52tNEwV8sSogalw0e/view?usp=sharing">執行檔連結</a>
