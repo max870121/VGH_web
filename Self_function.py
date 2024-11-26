@@ -120,7 +120,13 @@ def get_last_admission(driver,ID):
 def get_drug(driver,ID):
     driver.get("https://web9.vghtpe.gov.tw/emr/qemr/qemr.cfm?action=findUd&histno="+ID)
     soup = BeautifulSoup(driver.page_source, 'html.parser')
-    drug_url=soup.find("a")["href"]
+    drug_url_list=soup.find_all("a")
+    adminID=get_adminID(driver,ID)
+    drug_url=drug_url_list[0]["href"]
+    for a_url in drug_url_list:
+        if adminID in a_url["href"]:
+            drug_url=a_url["href"]
+
     root_url="https://web9.vghtpe.gov.tw/"
     driver.get(root_url+drug_url)
     soup = BeautifulSoup(driver.page_source, 'html.parser')

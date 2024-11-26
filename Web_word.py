@@ -189,8 +189,10 @@ def generate_table_report(driver,doc, ID, row_cells,pat):
 
         for i in range(len(progress_note)):
             assessment=progress_note[i]["Assessment"]
-            if len(assessment)>5:
+            if not "Ditto" in assessment or not "ditto" in assessment:
                 break
+            # if len(assessment)>5:
+            #     break
         paragraph.add_run(assessment)
     except:
         pass
@@ -237,7 +239,6 @@ def generate_table_report(driver,doc, ID, row_cells,pat):
     except:
         pass
 
-    
     try:
 
         def convert_drug(data_drug):
@@ -308,8 +309,9 @@ set_font_size(doc, 6)
 set_paragraph_spacing(doc, spacing=0)
 
 # 保存 Word 文件
-doc.save(docID+'.docx')
-print("儲存為"+docID+'.docx')
+filename=datetime.now().strftime('%Y%m%d')+"_"+docID+"_"+"patient_list"+'.docx'
+doc.save(filename)
+print("儲存為"+filename)
 
 driver.quit()
 
