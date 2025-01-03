@@ -109,7 +109,7 @@ def get_last_admission(driver,ID):
     admnote = soup.find(title="admnote")
     root_url="https://web9.vghtpe.gov.tw/"
     admin_url=root_url+admnote['href']
-    time.sleep(0.5)
+    ##time.sleep(0.5)
     driver.get(admin_url)
     soup = BeautifulSoup(driver.page_source, 'html.parser')
     return soup.pre
@@ -276,7 +276,7 @@ def get_recent_report(driver, ID, report_num=3):
         print(Report_name)
         report_name_list.append(Report_name)
         # report_url=report["href"]
-        # time.sleep(random.random()*2)
+        # ##time.sleep(random.random()*2)
         # driver.get(root_url+report_url)
         
         
