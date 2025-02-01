@@ -86,7 +86,8 @@ driver.get("https://web9.vghtpe.gov.tw/emr/qemr/qemr.cfm?action=findEmr&histno=5
 soup = BeautifulSoup(driver.page_source, 'html.parser')
 
 docID=input("燈號(四碼)")
-pat_data=get_serarched_patient(driver,ward="0",patID="",docID=docID)
+ward=input("病房(Ex A101)")
+pat_data=get_serarched_patient(driver,ward=ward,patID="",docID=docID)
 
 
 def set_paragraph_spacing(doc, spacing=0):
@@ -189,10 +190,11 @@ def generate_table_report(driver,doc, ID, row_cells,pat):
 
         for i in range(len(progress_note)):
             assessment=progress_note[i]["Assessment"]
-            if not "Ditto" in assessment or not "ditto" in assessment:
+            if "Ditto" in assessment:
+                continue
+            else:
                 break
-            # if len(assessment)>5:
-            #     break
+
         paragraph.add_run(assessment)
     except:
         pass
@@ -290,10 +292,16 @@ for cell in hdr_cells:
 
 for pat in pat_data:
     row_cells = table.add_row().cells
-    ID=pat[1]
+    if len(pat)<3:
+        continue
+    if docID=="":
+        ID=pat[2]
+    else:
+        ID=pat[1]
     generate_table_report(driver=driver,doc=doc, ID=ID, row_cells=row_cells,pat=pat)
     for cell in row_cells:
         set_font_size(cell, 6)
+    input("Wait a while and press enter")
 
 for idx,col in enumerate(table.columns):
     max_length = max(len(cell.text) for cell in col.cells)
