@@ -34,6 +34,8 @@ import os
 from Self_function import *
 from datetime import datetime, timedelta
 import pwinput
+import chromedriver_autoinstaller
+
 
 # 配置 WebDriver
 chrome_options = Options()
@@ -51,6 +53,7 @@ chrome_options.add_argument('--log-level=3')
 
 # WebDriver 路徑
 # webdriver_service = Service(r'C:\Users\reguser\Downloads\chrome-win64')  # 替換成你的 chromedriver 路徑
+chromedriver_autoinstaller.install()
 service = Service(executable_path=r'chromedriver.exe')
 driver = webdriver.Chrome(service=service,options=chrome_options)
 
@@ -87,9 +90,9 @@ driver.get("https://web9.vghtpe.gov.tw/emr/qemr/qemr.cfm?action=findEmr&histno=5
 soup = BeautifulSoup(driver.page_source, 'html.parser')
 
 
-docID=input("燈號(四碼)")
+docID=input("請輸入燈號(四碼)(若需要病房請直接按Enter):")
 if docID=="":
-    ward=input("病房(Ex A101)")
+    ward=input("病房(Ex A101):")
 else:
     ward="0"
 pat_data=get_serarched_patient(driver,ward=ward,patID="",docID=docID)
@@ -307,8 +310,9 @@ for idx, pat in enumerate(pat_data):
     for cell in row_cells:
         set_font_size(cell, 6)
     time.sleep(random.randint(3,8))
-    if idx>14:
-        time.sleep(30)
+    if idx>10:
+        print("wait a while")
+        time.sleep(60)
 
 for idx,col in enumerate(table.columns):
     max_length = max(len(cell.text) for cell in col.cells)
