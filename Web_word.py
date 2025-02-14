@@ -40,6 +40,7 @@ chrome_options = Options()
 chrome_options.headless = True
 chrome_options.add_argument("--headless=new")  # 如果不需要顯示瀏覽器界面，可以啟用 headless 模式
 chrome_options.add_argument("--window-position=-2400,-2400")
+chrome_options.add_experimental_option('excludeSwitches', ['enable-logging'])
 chrome_options.add_argument('--log-level=3')
 
 # chrome_options.add_argument("--no-sandbox")
@@ -85,8 +86,12 @@ time.sleep(0.5)
 driver.get("https://web9.vghtpe.gov.tw/emr/qemr/qemr.cfm?action=findEmr&histno=50687768")
 soup = BeautifulSoup(driver.page_source, 'html.parser')
 
+
 docID=input("燈號(四碼)")
-ward=input("病房(Ex A101)")
+if docID=="":
+    ward=input("病房(Ex A101)")
+else:
+    ward="0"
 pat_data=get_serarched_patient(driver,ward=ward,patID="",docID=docID)
 
 
@@ -157,7 +162,7 @@ def generate_table_report(driver,doc, ID, row_cells,pat):
 
     try:
         TPR=get_TPR(driver,ID)
-        time.sleep(3*random.random())
+        # time.sleep(3*random.random())
         run=paragraph.add_run("\n")
         paragraph.add_run("\n".join(list(TPR[["體溫","心跳","呼吸","收縮壓","舒張壓"]].iloc[0])))
         
@@ -167,7 +172,7 @@ def generate_table_report(driver,doc, ID, row_cells,pat):
     try:
         run=paragraph.add_run()
         TPR_img=get_TPR_img(driver,ID)
-        time.sleep(3*random.random())
+        # time.sleep(3*random.random())
         image_path = 'temp_image.png'
         TPR_img.save(image_path)
         run.add_picture(image_path, width=Inches(1))  # 插入圖片
@@ -186,7 +191,7 @@ def generate_table_report(driver,doc, ID, row_cells,pat):
     paragraph = assessment_cell.paragraphs[0]
     try:
         progress_note=get_progress_note(driver,ID,num=5)
-        time.sleep(3*random.random())
+        # time.sleep(3*random.random())
 
         for i in range(len(progress_note)):
             assessment=progress_note[i]["Assessment"]
@@ -212,7 +217,7 @@ def generate_table_report(driver,doc, ID, row_cells,pat):
     try:
         report_num=3
         report_name,recent_report=get_recent_report(driver, ID, report_num=report_num)
-        time.sleep(3*random.random())
+        # time.sleep(3*random.random())
         for i in range(report_num):
             Lab_cells.add_paragraph(report_name[i])
             # add_table(doc, recent_report[report_name[i]])
@@ -225,14 +230,14 @@ def generate_table_report(driver,doc, ID, row_cells,pat):
         SMAC["日期"]=SMAC["日期"].apply(convert_date)
         SMAC=SMAC[["日期","NA","K","BUN","CREA","ALT","BILIT","CRP"]]
         SMAC = SMAC.loc[~(SMAC[["日期","NA","K","BUN","CREA","ALT","BILIT","CRP"]] == '-').all(axis=1)]
-        time.sleep(3*random.random())
+        # time.sleep(3*random.random())
         add_table(Lab_cells, SMAC.tail(3) )
     except:
         pass
 
     try:
         CBC=get_res_report(driver,ID,resdtype="CBC")
-        time.sleep(3*random.random())
+        # time.sleep(3*random.random())
         CBC["日期"]=CBC["日期"].apply(convert_date)
         CBC=CBC[["日期","WBC","HGB","PLT",'SEG', 'PT', 'APTT']]
         CBC = CBC.loc[~(CBC[["日期","WBC","HGB","PLT",'SEG', 'PT', 'APTT']] == '-').all(axis=1)]
@@ -253,7 +258,7 @@ def generate_table_report(driver,doc, ID, row_cells,pat):
         drug=get_drug(driver,ID)
         drug["學名"]=drug["學名"].apply(convert_drug)
         drug["開始日"]=drug["開始日"].apply(convert_drug_date)
-        time.sleep(3*random.random())
+        # time.sleep(3*random.random())
         add_table(Lab_cells, drug[drug["狀態"]=="使用中"][["學名","劑量","途徑","頻次","開始日"] ])
     except:
         pass
@@ -290,7 +295,7 @@ for cell in hdr_cells:
     set_font_size(cell, 6)
 
 
-for pat in pat_data:
+for idx, pat in enumerate(pat_data):
     row_cells = table.add_row().cells
     if len(pat)<3:
         continue
@@ -301,7 +306,9 @@ for pat in pat_data:
     generate_table_report(driver=driver,doc=doc, ID=ID, row_cells=row_cells,pat=pat)
     for cell in row_cells:
         set_font_size(cell, 6)
-    input("Wait a while and press enter")
+    time.sleep(random.randint(3,8))
+    if idx>14:
+        time.sleep(30)
 
 for idx,col in enumerate(table.columns):
     max_length = max(len(cell.text) for cell in col.cells)
