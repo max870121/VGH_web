@@ -1,19 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
-
-
-# !conda install anaconda::pillow
-# !conda install conda-forge::matplotlib
-# !conda install anaconda::beautifulsoup4
-# !conda install conda install conda-forge::selenium
-# !conda install anaconda::pandas
-
-
-# In[1]:
-
-
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
@@ -53,14 +40,22 @@ chrome_options.add_argument('--log-level=3')
 
 # WebDriver 路徑
 # webdriver_service = Service(r'C:\Users\reguser\Downloads\chrome-win64')  # 替換成你的 chromedriver 路徑
+
+
 chromedriver_autoinstaller.install()
-service = Service(executable_path=r'chromedriver.exe')
+service = Service()
 driver = webdriver.Chrome(service=service,options=chrome_options)
 
 
 # In[2]:
 
+print("""
+此程式可以自動查詢病人資料，製作一份WORD的查房摘要
+請先打入入口網帳號密碼，之後輸入燈號或式直接按ENTER之後輸入病房
+***注意 若病人太多可能會被資訊室鎖住該台電腦一陣子，可以重新開機後稍等一下
+作者的燈號為: 8375K，如果有任何問題或建議，歡迎聯絡!!!
 
+""")
 username=input("帳號 : ")
 
 password = pwinput.pwinput(prompt='密碼: ', mask='*')
@@ -156,6 +151,11 @@ def convert_drug(data_drug):
     return data_drug
 
 
+
+
+
+
+
 def generate_table_report(driver,doc, ID, row_cells,pat):
     print(ID)
     
@@ -168,7 +168,6 @@ def generate_table_report(driver,doc, ID, row_cells,pat):
         # time.sleep(3*random.random())
         run=paragraph.add_run("\n")
         paragraph.add_run("\n".join(list(TPR[["體溫","心跳","呼吸","收縮壓","舒張壓"]].iloc[0])))
-        
     except:
         pass
     
@@ -310,7 +309,7 @@ for idx, pat in enumerate(pat_data):
     for cell in row_cells:
         set_font_size(cell, 6)
     time.sleep(random.randint(3,8))
-    if idx>10:
+    if idx%10==0 and not idx==0:
         print("wait a while")
         time.sleep(60)
 
