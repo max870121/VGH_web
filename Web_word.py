@@ -22,9 +22,8 @@ from Self_function import *
 from datetime import datetime, timedelta
 import pwinput
 import chromedriver_autoinstaller
+import functools
 
-
-# 配置 WebDriver
 chrome_options = Options()
 chrome_options.headless = True
 chrome_options.add_argument("--headless=new")  # 如果不需要顯示瀏覽器界面，可以啟用 headless 模式
@@ -32,22 +31,11 @@ chrome_options.add_argument("--window-position=-2400,-2400")
 chrome_options.add_experimental_option('excludeSwitches', ['enable-logging'])
 chrome_options.add_argument('--log-level=3')
 
-# chrome_options.add_argument("--no-sandbox")
-# WINDOW_SIZE = "0,0"
-# chrome_options.add_argument("--window-size=%s" % WINDOW_SIZE)
-# chrome_options.add_argument("screenshot")
-# chrome_options.add_argument("--disable-dev-shm-usage")
-
-# WebDriver 路徑
-# webdriver_service = Service(r'C:\Users\reguser\Downloads\chrome-win64')  # 替換成你的 chromedriver 路徑
-
 
 chromedriver_autoinstaller.install()
 service = Service()
 driver = webdriver.Chrome(service=service,options=chrome_options)
 
-
-# In[2]:
 
 print("""
 此程式可以自動查詢病人資料，製作一份WORD的查房摘要
@@ -59,10 +47,6 @@ print("""
 username=input("帳號 : ")
 
 password = pwinput.pwinput(prompt='密碼: ', mask='*')
-
-
-# In[7]:
-
 
 # 打開登入頁面
 login_url = 'https://eip.vghtpe.gov.tw/login.php'  #
@@ -92,7 +76,7 @@ else:
     ward="0"
 pat_data=get_serarched_patient(driver,ward=ward,patID="",docID=docID)
 
-
+@try_except_decorator
 def set_paragraph_spacing(doc, spacing=0):
     """Set paragraph spacing for all paragraphs in the document."""
     for paragraph in doc.paragraphs:
@@ -100,11 +84,13 @@ def set_paragraph_spacing(doc, spacing=0):
         paragraph.paragraph_format.space_before = Pt(spacing)
         paragraph.paragraph_format.space_after = Pt(spacing)
 
+@try_except_decorator
 def set_font_size(doc, size):
     for paragraph in doc.paragraphs:
         for run in paragraph.runs:
             run.font.size = Pt(size)
 
+@try_except_decorator
 def add_table(doc, df):
     table = doc.add_table(rows=1, cols=len(df.columns))
     
@@ -138,137 +124,135 @@ def add_table(doc, df):
         for cell in col.cells:
             cell.width = col_width
 
+@try_except_decorator
 def convert_date(date_str):
     date_str=date_str[3:8]
     return date_str
 
+@try_except_decorator
 def add_line(doc):
     doc.add_paragraph("-------------------------------")
 
+@try_except_decorator
 def convert_drug(data_drug):
     data_drug=data_drug.split(" ")[:2]
     data_drug=" ".join(data_drug)
     return data_drug
 
-
-
-
-
-
-
 def generate_table_report(driver,doc, ID, row_cells,pat):
     print(ID)
-    
     info_cell=row_cells[0]
     paragraph = info_cell.paragraphs[0]
     paragraph.add_run("\n".join(pat))
 
-    try:
-        TPR=get_TPR(driver,ID)
-        # time.sleep(3*random.random())
-        run=paragraph.add_run("\n")
-        paragraph.add_run("\n".join(list(TPR[["體溫","心跳","呼吸","收縮壓","舒張壓"]].iloc[0])))
-    except:
-        pass
+    tasks = [
+    ('TPR', lambda: get_TPR(driver, ID)),
+    ('TPR_img', lambda: get_TPR_img(driver, ID)),
+    ('BW_BL', lambda: get_BW_BL(driver, ID, adminID="all")),
+    ('progress_note', lambda: get_progress_note(driver, ID, num=5)),
+    ('patIO', lambda: get_drainage(driver, ID)),
+    ('SMAC', lambda: get_res_report(driver, ID, resdtype="SMAC")),
+    ('CBC', lambda: get_res_report(driver, ID, resdtype="CBC")),
+    ('drug', lambda: get_drug(driver, ID))
+    ]
+
+    random.shuffle(tasks)
+
+    results = {}
+
+    for name, task in tasks:
+        results[name] = task()
+
+    TPR=results["TPR"]
+    TPR_img=results["TPR_img"]
+    BW_BL=results["BW_BL"]
+    progress_note=results["progress_note"]
+    patIO=results["patIO"]
+    SMAC=results["SMAC"]
+    CBC=results["CBC"]
+    drug=results["drug"]
+
+    # time.sleep(3*random.random())
+    run=paragraph.add_run("\n")
+    paragraph.add_run("\n".join(list(TPR[["體溫","心跳","呼吸","收縮壓","舒張壓"]].iloc[0])))
+
+    run=paragraph.add_run()
     
-    try:
-        run=paragraph.add_run()
-        TPR_img=get_TPR_img(driver,ID)
-        # time.sleep(3*random.random())
+    # time.sleep(3*random.random())
+    if not TPR_img==None:
         image_path = 'temp_image.png'
         TPR_img.save(image_path)
         run.add_picture(image_path, width=Inches(1))  # 插入圖片
         os.remove(image_path)
-    except:
-        pass
 
-    try:
-        BW_BL=get_BW_BL(driver,ID, adminID="all")
-        BW_BL=BW_BL[["身高","體重"]]
-        add_table(info_cell, BW_BL.head(2) )
-    except:
-        pass
+    
+    BW_BL=BW_BL[["身高","體重"]]
+    add_table(info_cell, BW_BL.head(2) )
  
     assessment_cell=row_cells[1]
     paragraph = assessment_cell.paragraphs[0]
-    try:
-        progress_note=get_progress_note(driver,ID,num=5)
-        # time.sleep(3*random.random())
 
+    
+        # time.sleep(3*random.random())
+    try:
         for i in range(len(progress_note)):
             assessment=progress_note[i]["Assessment"]
             if "Ditto" in assessment:
                 continue
             else:
                 break
-
         paragraph.add_run(assessment)
     except:
         pass
 
     Lab_cells = row_cells[2]
 
+    
     try:
-        patIO=get_drainage(driver, ID)
         add_table(Lab_cells,patIO[["項目","總量"]])
-        # add_line(Lab_cells)
     except:
         pass
+    # add_line(Lab_cells)
     
 
-    try:
-        report_num=3
-        report_name,recent_report=get_recent_report(driver, ID, report_num=report_num)
-        # time.sleep(3*random.random())
-        for i in range(report_num):
-            Lab_cells.add_paragraph(report_name[i])
-            # add_table(doc, recent_report[report_name[i]])
-    except:
-        pass
+    report_num=3
+    report_name,recent_report=get_recent_report(driver, ID, report_num=report_num)
+    # time.sleep(3*random.random())
+    for i in range(report_num):
+        Lab_cells.add_paragraph(report_name[i])
+        # add_table(doc, recent_report[report_name[i]])
 
 
-    try:
-        SMAC=get_res_report(driver,ID,resdtype="SMAC")
-        SMAC["日期"]=SMAC["日期"].apply(convert_date)
-        SMAC=SMAC[["日期","NA","K","BUN","CREA","ALT","BILIT","CRP"]]
-        SMAC = SMAC.loc[~(SMAC[["日期","NA","K","BUN","CREA","ALT","BILIT","CRP"]] == '-').all(axis=1)]
-        # time.sleep(3*random.random())
-        add_table(Lab_cells, SMAC.tail(3) )
-    except:
-        pass
+    
+    SMAC["日期"]=SMAC["日期"].apply(convert_date)
+    SMAC=SMAC[["日期","NA","K","BUN","CREA","ALT","BILIT","CRP"]]
+    SMAC = SMAC.loc[~(SMAC[["日期","NA","K","BUN","CREA","ALT","BILIT","CRP"]] == '-').all(axis=1)]
+    # time.sleep(3*random.random())
+    add_table(Lab_cells, SMAC.tail(3) )
 
-    try:
-        CBC=get_res_report(driver,ID,resdtype="CBC")
-        # time.sleep(3*random.random())
-        CBC["日期"]=CBC["日期"].apply(convert_date)
-        CBC=CBC[["日期","WBC","HGB","PLT",'SEG', 'PT', 'APTT']]
-        CBC = CBC.loc[~(CBC[["日期","WBC","HGB","PLT",'SEG', 'PT', 'APTT']] == '-').all(axis=1)]
-        add_table(Lab_cells, CBC.tail(3) )
+    
+    # time.sleep(3*random.random())
+    CBC["日期"]=CBC["日期"].apply(convert_date)
+    CBC=CBC[["日期","WBC","HGB","PLT",'SEG', 'PT', 'APTT']]
+    CBC = CBC.loc[~(CBC[["日期","WBC","HGB","PLT",'SEG', 'PT', 'APTT']] == '-').all(axis=1)]
+    add_table(Lab_cells, CBC.tail(3) )
         # add_line(Lab_cells)
-    except:
-        pass
 
-    try:
+    def convert_drug(data_drug):
+        data_drug=data_drug.split(" ")[:2]
+        data_drug=" ".join(data_drug)
+        return data_drug
+    def convert_drug_date(data_drug_date):
+        data_drug_date=data_drug_date[5:10]
+        return data_drug_date
 
-        def convert_drug(data_drug):
-            data_drug=data_drug.split(" ")[:2]
-            data_drug=" ".join(data_drug)
-            return data_drug
-        def convert_drug_date(data_drug_date):
-            data_drug_date=data_drug_date[5:10]
-            return data_drug_date
-        drug=get_drug(driver,ID)
-        drug["學名"]=drug["學名"].apply(convert_drug)
-        drug["開始日"]=drug["開始日"].apply(convert_drug_date)
-        # time.sleep(3*random.random())
-        add_table(Lab_cells, drug[drug["狀態"]=="使用中"][["學名","劑量","途徑","頻次","開始日"] ])
-    except:
-        pass
+
+    drug["學名"]=drug["學名"].apply(convert_drug)
+    drug["開始日"]=drug["開始日"].apply(convert_drug_date)
+    # time.sleep(3*random.random())
+    add_table(Lab_cells, drug[drug["狀態"]=="使用中"][["學名","劑量","途徑","頻次","開始日"] ])
 
 doc = Document()
-
-
-
 section = doc.sections[0]
 new_width, new_height = section.page_height, section.page_width
 section.orientation = WD_ORIENT.LANDSCAPE
@@ -293,9 +277,9 @@ hdr_cells = table.rows[0].cells
 hdr_cells[0].text = '病人資料'
 hdr_cells[1].text = 'Assessment'
 hdr_cells[2].text = 'Lab Data+drug'
+
 for cell in hdr_cells:
     set_font_size(cell, 6)
-
 
 for idx, pat in enumerate(pat_data):
     row_cells = table.add_row().cells
@@ -321,8 +305,6 @@ for idx,col in enumerate(table.columns):
     for cell in col.cells:
         cell.width = col_width
 
-
-# 設置所有文本字體為 6 號
 set_font_size(doc, 6)
 set_paragraph_spacing(doc, spacing=0)
 

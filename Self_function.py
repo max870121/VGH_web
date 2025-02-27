@@ -12,8 +12,20 @@ from datetime import datetime, timedelta
 from io import BytesIO
 from PIL import Image
 import random
+import functools
+
+
+def try_except_decorator(func):
+    @functools.wraps(func)  # 保持原始函數的名稱和文檔字串
+    def wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except Exception as e:
+           return None
+    return wrapper
 
 # split the html table
+@try_except_decorator
 def html_table(table):
     data=[]
     table_head = table.find('thead')
@@ -36,6 +48,7 @@ def html_table(table):
     return df
 #======================================
 # Get TPR
+@try_except_decorator
 def get_adminID(driver,ID):
     TPR_url="https://web9.vghtpe.gov.tw/emr/qemr/qemr.cfm?action=findPbv&histno="+ID
     driver.get(TPR_url)
@@ -43,6 +56,7 @@ def get_adminID(driver,ID):
     adminID=soup.option['value'].split("=")[-1]
     return adminID
 
+@try_except_decorator
 def get_TPR(driver,ID, adminID=None):
     if not adminID:
         adminID=get_adminID(driver,ID)
@@ -55,7 +69,7 @@ def get_TPR(driver,ID, adminID=None):
     return data
 #==========================================================
 ## Get TPR image
-
+@try_except_decorator
 def get_TPR_img(driver,ID, adminID=None):
     if not adminID:
         adminID=get_adminID(driver,ID)
@@ -75,7 +89,7 @@ def get_TPR_img(driver,ID, adminID=None):
     return image
 # =======================================================================
 ## Get BW_BL
-
+@try_except_decorator
 def get_BW_BL(driver,ID, adminID="all"):
     if not adminID:
         adminID=get_adminID(ID)
@@ -90,7 +104,7 @@ def get_BW_BL(driver,ID, adminID="all"):
 
 #==================================================================
 ## Get Lab value
-
+@try_except_decorator
 def get_Lab_value(driver,ID, Lab_value):
     driver.get("https://web9.vghtpe.gov.tw/emr/qemr/qemr.cfm?action=findResd&resdtype=DCHEM&histno="+ID+"&resdtmonth=24")
     soup = BeautifulSoup(driver.page_source, 'html.parser')
@@ -103,13 +117,14 @@ def get_Lab_value(driver,ID, Lab_value):
 #=================================================================
 ## get latest admission note
 
+@try_except_decorator
 def get_last_admission(driver,ID):
     driver.get("https://web9.vghtpe.gov.tw/emr/qemr/qemr.cfm?action=findAdm&histno="+ID)
     soup = BeautifulSoup(driver.page_source, 'html.parser')
     admnote = soup.find(title="admnote")
     root_url="https://web9.vghtpe.gov.tw/"
     admin_url=root_url+admnote['href']
-    time.sleep(0.5)
+    # time.sleep(0.5)
     driver.get(admin_url)
     soup = BeautifulSoup(driver.page_source, 'html.parser')
     return soup.pre
@@ -117,6 +132,7 @@ def get_last_admission(driver,ID):
 # =====================================================
 ## get current drug
 
+@try_except_decorator
 def get_drug(driver,ID):
     driver.get("https://web9.vghtpe.gov.tw/emr/qemr/qemr.cfm?action=findUd&histno="+ID)
     soup = BeautifulSoup(driver.page_source, 'html.parser')
@@ -138,6 +154,7 @@ def get_drug(driver,ID):
 # split the html table
 ## get res report
 
+@try_except_decorator
 def html_res_table(table):
     data=[]
     table_head = table.find('thead')
@@ -156,6 +173,7 @@ def html_res_table(table):
     df = pd.DataFrame(data,columns=t_head)
     return df
 
+@try_except_decorator
 def get_res_report(driver, ID, resdtype="SMAC", resdtmonth="00"):
     report_dict={
         "SMAC":"DCHEM",
@@ -174,7 +192,7 @@ def get_res_report(driver, ID, resdtype="SMAC", resdtmonth="00"):
 #=================
 
 ## get_progress_note
-
+@try_except_decorator
 def get_progress_note(driver,ID,num=1):
     adminID=get_adminID(driver,ID)
     driver.get("https://web9.vghtpe.gov.tw/emr/qemr/qemr.cfm?action=findPrg&histno="+ID+"&caseno="+adminID)
@@ -212,6 +230,7 @@ def get_progress_note(driver,ID,num=1):
 
 
 #============================================
+@try_except_decorator
 def get_my_patient(driver):
     driver.get("https://web9.vghtpe.gov.tw/emr/qemr/qemr.cfm?action=findPatient&srnId=DRWEBAPP&")
     soup = BeautifulSoup(driver.page_source, 'html.parser')
@@ -233,7 +252,7 @@ def get_my_patient(driver):
 
 #==============================
 # get recent report
-
+@try_except_decorator
 def html_report_table(table):
     data=[]
     # table_head = table.find('thead')
@@ -259,6 +278,7 @@ def html_report_table(table):
     
     return df
 
+@try_except_decorator
 def get_recent_report(driver, ID, report_num=3):
     driver.get("https://web9.vghtpe.gov.tw/emr/qemr/qemr.cfm?action=findRes&tdept=ALL&histno="+ID)
     soup = BeautifulSoup(driver.page_source, 'html.parser')
@@ -290,6 +310,7 @@ def get_recent_report(driver, ID, report_num=3):
 
 # ============================================
 
+@try_except_decorator
 def get_serarched_patient(driver,ward="0",patID="",docID=""):
     driver.get("https://web9.vghtpe.gov.tw/emr/qemr/qemr.cfm?action=findPatient&wd="+ward+"&histno="+patID+"&pidno=&namec=&drid="+docID+"&er=0&bilqrta=0&bilqrtdt=&bildurdt=0&other=0&nametype=")
     soup = BeautifulSoup(driver.page_source, 'html.parser')
@@ -317,6 +338,7 @@ def get_serarched_patient(driver,ward="0",patID="",docID=""):
 
 # ================================================
 # get Drainage (IO)
+@try_except_decorator
 def html_IO_table(table):
     data=[]
 
@@ -357,7 +379,7 @@ def html_IO_table(table):
     # df = pd.DataFrame(data[1:],columns=data[0])
     return df
 
-
+@try_except_decorator
 def get_drainage(driver, ID):
     adminID=get_adminID(driver,ID)
     driver.get("https://web9.vghtpe.gov.tw/emr/qemr/qemr.cfm?action=goNIS&hisid="+ID+"&caseno="+adminID)
