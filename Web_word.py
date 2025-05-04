@@ -84,13 +84,29 @@ time.sleep(0.5)
 driver.get("https://web9.vghtpe.gov.tw/emr/qemr/qemr.cfm?action=findEmr&histno=50687768")
 soup = BeautifulSoup(driver.page_source, 'html.parser')
 
+Search_type=input("選擇要如何搜尋病人，依燈號請輸入doc, 病房請出入ward, 病歷號請輸入 pat:")
 
-docID=input("請輸入燈號(四碼)(若需要病房請直接按Enter):")
-if docID=="":
-    ward=input("病房(Ex A101):")
+
+while not Search_type=="doc" and not Search_type=="ward" and not Search_type=="pat":
+    print("輸入錯誤，請重新輸入")
+    Search_type=input("選擇要如何搜尋病人，依燈號請輸入doc, 病房請出入ward, 病歷號請輸入 pat:")
+
+if Search_type=="doc":
+    ward="0"
+    docID=input("請輸入燈號(四碼):")
+    pat_data=get_serarched_patient(driver,ward=ward,patID="",docID=docID)
+elif Search_type=="ward":
+    docID=""
+    ward=input("請輸入病房(Ex A101):")
+    pat_data=get_serarched_patient(driver,ward=ward,patID="",docID="")
 else:
     ward="0"
-pat_data=get_serarched_patient(driver,ward=ward,patID="",docID=docID)
+    docID=""
+    pat_data=[]
+    patID=input("請輸入病歷號(若不須再輸入請直接按enter):")
+    while not patID=="":
+        pat_data.append(get_serarched_patient(driver,ward=ward,patID=patID,docID="")[0])
+        patID=input("請輸入病歷號(若不須再輸入請直接按enter):")
 
 
 def set_paragraph_spacing(doc, spacing=0):
@@ -301,7 +317,7 @@ for idx, pat in enumerate(pat_data):
     row_cells = table.add_row().cells
     if len(pat)<3:
         continue
-    if docID=="":
+    if Search_type=="ward":
         ID=pat[2]
     else:
         ID=pat[1]
