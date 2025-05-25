@@ -1,4 +1,3 @@
-
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
@@ -175,7 +174,7 @@ def get_res_report(driver, ID, resdtype="SMAC", resdtmonth="00"):
 
 ## get_progress_note
 
-def get_progress_note(driver,ID,num=1):
+def get_progress_note(driver,ID,num=5):
     adminID=get_adminID(driver,ID)
     driver.get("https://web9.vghtpe.gov.tw/emr/qemr/qemr.cfm?action=findPrg&histno="+ID+"&caseno="+adminID)
     soup = BeautifulSoup(driver.page_source, 'html.parser')
@@ -191,22 +190,28 @@ def get_progress_note(driver,ID,num=1):
     # b_note=rows[13:26]
     
     prog_note_list=[]
-    for i in range(num):
-        try:
-            a_note=rows[i*13:(i+1)*13]
-            progress_note={}
-            progress_note["date"]=a_note[0].text
-            progress_note["Description"]=a_note[2].pre.text
-            progress_note["Subjective"]=a_note[4].pre.text
-            progress_note["Objective"]=a_note[6].pre.text
-            progress_note["Assessment"]=a_note[8].pre.text
-            progress_note["Plan"]=a_note[10].pre.text
+    progress_title=["Description","Subjective","Objective", "Assessment", "Plan"]
+
+    row_idx=0
+    
+    while len(prog_note_list)<num:
+        progress_note={}
+        row=rows[row_idx].text
+        if "Note" in row or "Summary" in row:
+            progress_note["date"]=row
+            row_idx=row_idx+1
+            for title in progress_title:
+                row=rows[row_idx].text
+                if title in row:
+                    row_idx=row_idx+1
+                    progress_note[title]=rows[row_idx].pre.text
+                row_idx=row_idx+1
+            prog_note_list.append(progress_note)
+        if row_idx<len(rows)-1:    
+            row_idx=row_idx+1
+        else:
+            break
             
-        except:
-            pass
-        prog_note_list.append(progress_note)
-    
-    
     return prog_note_list
 
 

@@ -22,6 +22,7 @@ from Self_function import *
 from datetime import datetime, timedelta
 import pwinput
 import chromedriver_autoinstaller
+import platform
 
 
 # 配置 WebDriver
@@ -32,52 +33,56 @@ chrome_options.add_argument("--window-position=-2400,-2400")
 chrome_options.add_experimental_option('excludeSwitches', ['enable-logging'])
 chrome_options.add_argument('--log-level=3')
 
-# chrome_options.add_argument("--no-sandbox")
-# WINDOW_SIZE = "0,0"
-# chrome_options.add_argument("--window-size=%s" % WINDOW_SIZE)
-# chrome_options.add_argument("screenshot")
-# chrome_options.add_argument("--disable-dev-shm-usage")
-
-# WebDriver 路徑
-# webdriver_service = Service(r'C:\Users\reguser\Downloads\chrome-win64')  # 替換成你的 chromedriver 路徑
-
-
 chromedriver_autoinstaller.install()
 service = Service()
 driver = webdriver.Chrome(service=service,options=chrome_options)
+def clear_terminal():
+    if platform.system() == "Windows":
+        os.system('cls')
+    else:
+        os.system('clear')
 
+while True:
+    clear_terminal()
+    print("""
+    此程式可以自動查詢病人資料，製作一份WORD的查房摘要
+    請先打入入口網帳號密碼，之後輸入燈號或式直接按ENTER之後輸入病房
+    ***注意 若病人太多可能會被資訊室鎖住該台電腦一陣子，可以重新開機後稍等一下
+    作者的燈號為: 8375K，如果有任何問題或建議，歡迎聯絡!!!
 
-# In[2]:
+    """)
+    login_url = 'https://eip.vghtpe.gov.tw/login.php'  #
+    driver.get(login_url)
+    
+    # 記錄目前網址（登入頁）
+    before_url = driver.current_url
 
-print("""
-此程式可以自動查詢病人資料，製作一份WORD的查房摘要
-請先打入入口網帳號密碼，之後輸入燈號或式直接按ENTER之後輸入病房
-***注意 若病人太多可能會被資訊室鎖住該台電腦一陣子，可以重新開機後稍等一下
-作者的燈號為: 8375K，如果有任何問題或建議，歡迎聯絡!!!
+    # 要求使用者輸入帳號與密碼
+    username = input("請輸入帳號：")
+    password = pwinput.pwinput(prompt='密碼: ', mask='*')
 
-""")
-username=input("帳號 : ")
+    # 找到輸入欄位
+    username_field = driver.find_element(By.ID, 'login_name')
+    password_field = driver.find_element(By.ID, 'password')
 
-password = pwinput.pwinput(prompt='密碼: ', mask='*')
+    # 輸入帳密並提交
+    username_field.clear()
+    password_field.clear()
+    username_field.send_keys(username)
+    password_field.send_keys(password)
+    password_field.send_keys(Keys.RETURN)
 
+    # 等待頁面跳轉（可視情況調整等待時間或用 WebDriverWait）
+    time.sleep(2)
 
-# In[7]:
-
-
-# 打開登入頁面
-login_url = 'https://eip.vghtpe.gov.tw/login.php'  #
-driver.get(login_url)
-
-# 找到用戶名和密碼輸入框
-username_field = driver.find_element(By.ID, 'login_name')  # 替換成實際的字段名稱
-password_field = driver.find_element(By.ID, 'password')  # 替換成實際的字段名稱
-
-# 輸入用戶名和密碼
-username_field.send_keys(username)  # 替換成實際的用戶名
-password_field.send_keys(password)  # 替換成實際的密碼
-
-# 提交表單
-password_field.send_keys(Keys.RETURN)
+    # 判斷是否跳轉成功（URL 改變）
+    after_url = driver.current_url
+    if after_url != before_url:
+        print("✅ 登入成功！")
+        clear_terminal()
+        break
+    else:
+        print("⚠️ 登入失敗，請重新輸入帳號與密碼。\n")
 
 time.sleep(0.5)
 
@@ -88,6 +93,7 @@ Search_type=input("選擇要如何搜尋病人，依燈號請輸入doc, 病房�
 
 
 while not Search_type=="doc" and not Search_type=="ward" and not Search_type=="pat":
+    clear_terminal()
     print("輸入錯誤，請重新輸入")
     Search_type=input("選擇要如何搜尋病人，依燈號請輸入doc, 病房請出入ward, 病歷號請輸入 pat:")
 
@@ -134,7 +140,11 @@ def add_table(doc, df):
             paragraph.paragraph_format.line_spacing = Pt(0)
             paragraph.paragraph_format.space_before = Pt(0)
             paragraph.paragraph_format.space_after = Pt(0)
-        
+
+    last_paragraph = doc.paragraphs[-1]
+    last_paragraph.paragraph_format.space_after = Pt(0)
+    last_paragraph.paragraph_format.space_before = Pt(0)
+    last_paragraph.paragraph_format.line_spacing = Pt(0)
     
     # 添加數據行
     for index, row in df.iterrows():
@@ -169,9 +179,6 @@ def convert_drug(data_drug):
 
 
 
-
-
-
 def generate_table_report(driver,doc, ID, row_cells,pat):
     print(ID)
     
@@ -183,7 +190,7 @@ def generate_table_report(driver,doc, ID, row_cells,pat):
         TPR=get_TPR(driver,ID)
         # time.sleep(3*random.random())
         run=paragraph.add_run("\n")
-        paragraph.add_run("\n".join(list(TPR[["體溫","心跳","呼吸","收縮壓","舒張壓"]].iloc[0])))
+        paragraph.add_run("\\".join(list(TPR[["體溫","心跳","呼吸","收縮壓","舒張壓"]].iloc[0])))
     except:
         pass
     
@@ -207,23 +214,22 @@ def generate_table_report(driver,doc, ID, row_cells,pat):
  
     assessment_cell=row_cells[1]
     paragraph = assessment_cell.paragraphs[0]
-    try:
-        progress_note=get_progress_note(driver,ID,num=5)
-        # time.sleep(3*random.random())
+    # try:
 
-        for i in range(len(progress_note)):
-            assessment=progress_note[i]["Assessment"]
-            if "Ditto" in assessment:
-                continue
-            else:
-                break
-
-        paragraph.add_run(assessment)
-    except:
-        pass
+    progress_note=get_progress_note(driver,ID,num=5)
+    # time.sleep(3*random.random())
+    for i in range(len(progress_note)):
+        assessment=progress_note[i]["Assessment"]
+        if "Ditto" in assessment or len(assessment)<5:
+            pass
+        else:
+            break
+        # breakpoint()
+    paragraph.add_run(assessment)
+    # except:
+    #     pass
 
     Lab_cells = row_cells[2]
-
     try:
         patIO=get_drainage(driver, ID)
         add_table(Lab_cells,patIO[["項目","總量"]])
@@ -296,6 +302,9 @@ section.top_margin = Pt(30)   # 0.5 inch
 section.bottom_margin = Pt(30) # 0.5 inch
 section.left_margin = Pt(30)   # 0.5 inch
 section.right_margin = Pt(30)  # 0.5 inch
+style = doc.styles['Normal']
+style.paragraph_format.space_after = Pt(0)
+style.paragraph_format.space_before = Pt(0)
 
 header = section.header
 paragraph=header.paragraphs[0]
