@@ -41,16 +41,16 @@ def clear_terminal():
         os.system('cls')
     else:
         os.system('clear')
-
-while True:
-    clear_terminal()
-    print("""
+print("請稍等...")
+time.sleep(3)
+clear_terminal()
+print("""
     此程式可以自動查詢病人資料，製作一份WORD的查房摘要
     請先打入入口網帳號密碼，之後輸入燈號或式直接按ENTER之後輸入病房
     ***注意 若病人太多可能會被資訊室鎖住該台電腦一陣子，可以重新開機後稍等一下
     作者的燈號為: 8375K，如果有任何問題或建議，歡迎聯絡!!!
-
     """)
+while True:
     login_url = 'https://eip.vghtpe.gov.tw/login.php'  #
     driver.get(login_url)
     
@@ -82,6 +82,13 @@ while True:
         clear_terminal()
         break
     else:
+        clear_terminal()
+        print("""
+    此程式可以自動查詢病人資料，製作一份WORD的查房摘要
+    請先打入入口網帳號密碼，之後輸入燈號或式直接按ENTER之後輸入病房
+    ***注意 若病人太多可能會被資訊室鎖住該台電腦一陣子，可以重新開機後稍等一下
+    作者的燈號為: 8375K，如果有任何問題或建議，歡迎聯絡!!!
+    """)
         print("⚠️ 登入失敗，請重新輸入帳號與密碼。\n")
 
 time.sleep(0.5)
