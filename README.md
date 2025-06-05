@@ -70,7 +70,7 @@
 ## About The Project
 
 網路爬蟲可以自動爬取資料，並生成word 的查房摘要
-如果需要執行檔請使用連結:[執行檔連結](https://github.com/max870121/VGH_web/raw/refs/heads/main/Auto_generate_patientlist_exe_Ver2.3.zip)
+如果需要執行檔請使用連結:[執行檔連結](https://github.com/max870121/VGH_web/raw/refs/heads/main/Auto_generate_patientlist_exe_Ver2.4.zip)
 
 
 
