@@ -299,6 +299,7 @@ def generate_table_report(vgh, doc, ID, row_cells, pat):
                 pass
             else:
                 break
+        assessment = assessment.replace('\r', '')
         paragraph.add_run(assessment)
     except:
         pass
@@ -308,10 +309,14 @@ def generate_table_report(vgh, doc, ID, row_cells, pat):
         patIO = get_drainage(vgh, ID)
         if not patIO.empty and all(col in patIO.columns for col in ["項目","總量"]):
             add_table(Lab_cells, patIO[["項目","總量"]])
+            p = Lab_cells.paragraphs[-1]._element
+            p.getparent().remove(p)
     except:
         pass
     
     try:
+        p = Lab_cells.paragraphs[0]._element
+        p.getparent().remove(p)
         report_num = 3
         report_name, recent_report = get_recent_report(vgh, ID, report_num=report_num)
         for i in range(len(report_name)):
@@ -328,6 +333,8 @@ def generate_table_report(vgh, doc, ID, row_cells, pat):
                 SMAC = SMAC[required_cols]
                 SMAC = SMAC.loc[~(SMAC[required_cols] == '-').all(axis=1)]
                 add_table(Lab_cells, SMAC.tail(3))
+                p = Lab_cells.paragraphs[-1]._element
+                p.getparent().remove(p)
     except:
         pass
 
@@ -340,6 +347,8 @@ def generate_table_report(vgh, doc, ID, row_cells, pat):
                 CBC = CBC[required_cols]
                 CBC = CBC.loc[~(CBC[required_cols] == '-').all(axis=1)]
                 add_table(Lab_cells, CBC.tail(3))
+                p = Lab_cells.paragraphs[-1]._element
+                p.getparent().remove(p)
     except:
         pass
 
