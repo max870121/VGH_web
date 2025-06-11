@@ -325,7 +325,7 @@ def generate_table_report(vgh, doc, ID, row_cells, pat):
         pass
 
     try:
-        SMAC = get_res_reporth(vgh, ID, resdtype="SMAC")
+        SMAC = get_res_report(vgh, ID, resdtype="SMAC")
         if not SMAC.empty and "日期" in SMAC.columns:
             SMAC["日期"] = SMAC["日期"].apply(convert_date)
             required_cols = ["日期","NA","K","BUN","CREA","ALT","BILIT","CRP"]
