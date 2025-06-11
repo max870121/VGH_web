@@ -287,11 +287,10 @@ def generate_table_report(vgh, doc, ID, row_cells, pat):
             add_table(info_cell, BW_BL.head(2))
     except:
         pass
- 
-    assessment_cell = row_cells[1]
-    paragraph = assessment_cell.paragraphs[0]
-
     try:
+        assessment_cell = row_cells[1]
+        paragraph = assessment_cell.paragraphs[0]
+
         progress_note = get_progress_note(vgh, ID, num=5)
         for i in range(len(progress_note)):
             assessment = progress_note[i]["Assessment"]
@@ -419,7 +418,7 @@ def create_word_document(pat_data, docID, search_type, vgh):
         max_length = max(len(cell.text) for cell in col.cells)
         col_width = Inches(max_length)
         if idx == 2:
-            col_width = Inches(max_length * 0.8)
+            col_width = Inches(max_length)
         for cell in col.cells:
             cell.width = col_width
 
@@ -444,9 +443,6 @@ def main():
     
     pat_data, docID, search_type = get_search_type(vgh)
     
-    # # 取得病人資料
-    # breakpoint()
-    # pat_data, docID = get_patient_data(vgh, search_type)
     # 創建 Word 文件
     create_word_document(pat_data, docID,search_type, vgh)
     
