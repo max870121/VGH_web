@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup
 import time
 from datetime import datetime, timedelta
 import random
+import os
 
 # split the html table
 def html_table(table):
@@ -42,6 +43,7 @@ def get_TPR(vgh, ID, adminID=None):
     soup = BeautifulSoup(page_content, 'html.parser')
     soup.find(id="tprlist")
     data = html_table(soup)
+    
     return data
 
 #==========================================================
@@ -56,9 +58,28 @@ def get_TPR_img(vgh, ID, adminID=None):
         adminID = get_adminID(vgh, ID)
     
     url = "https://web9.vghtpe.gov.tw/emr/qemr/qemr.cfm?action=findTpr&caseno=" + adminID + "&pbvtype=tpr"
-    # This would need to be implemented in your vgh module
+    page_content = vgh.get_page_after_login(url)
+    soup = BeautifulSoup(page_content, 'html.parser')
+    root_url = "https://web9.vghtpe.gov.tw"
+    img_tag = soup.find('img')  # You can also use soup.find_all('img') for multiple images
+    
+    if img_tag and img_tag.get('src'):
+        # Construct the full image URL (handle relative URLs)
+        img_url = img_tag['src']
+        img_url = root_url+ img_url
+        # Fetch the image
+        img_response = vgh.get_img_after_login(img_url)
+        
+        # Check if the image request was successful
+        if img_response.status_code == 200:
+            # Save the image to a local file
+            with open("downloaded_image.jpg", "wb") as file:
+                file.write(img_response.content)
+            # print("Image downloaded successfully!")
+        else:
+            print(f"Failed to retrieve image. Status code: {img_response.status_code}")
     # return vgh.get_screenshot(url)
-    raise NotImplementedError("Image capture needs to be implemented in vgh module")
+    # raise NotImplementedError("Image capture needs to be implemented in vgh module")
 
 # =======================================================================
 ## Get BW_BL
@@ -183,10 +204,14 @@ def get_progress_note(vgh, ID, num=5):
             row_idx = row_idx + 1
             for title in progress_title:
                 row = rows[row_idx].text
-                if title in row:
+                while not title in row:
+                    if row_idx > len(rows) - 2:
+                        break
+                    row_idx = row_idx + 1
+                    row = rows[row_idx].text
+                else:
                     row_idx = row_idx + 1
                     progress_note[title] = rows[row_idx].pre.text
-                row_idx = row_idx + 1
             prog_note_list.append(progress_note)
         if row_idx < len(rows) - 1:    
             row_idx = row_idx + 1
@@ -291,8 +316,8 @@ def get_searched_patient(vgh, ward="0", patID="", docID=""):
 def html_IO_table(table):
     data = []
 
-    table_body = table.find('tbody')
-    rows = table_body.find_all('tr')
+    # table_body = table.find('tbody')
+    rows = table.find_all('tr')
     for idx, row in enumerate(rows):
         if row.find('td').text == "引流":
             drainage = row
@@ -300,7 +325,7 @@ def html_IO_table(table):
     
     try:
         drainage_table = drainage.find('table')
-        drainage_table = drainage_table.find('tbody')
+        # drainage_table = drainage_table.find('tbody')
         drainage_rows = drainage_table.find_all('tr')
 
         drainage_data = []
@@ -316,6 +341,7 @@ def html_IO_table(table):
 
 def get_drainage(vgh, ID):
     adminID = get_adminID(vgh, ID)
+
     url = "https://web9.vghtpe.gov.tw/emr/qemr/qemr.cfm?action=goNIS&hisid=" + ID + "&caseno=" + adminID
     page_content = vgh.get_page_after_login(url)
     
@@ -325,5 +351,6 @@ def get_drainage(vgh, ID):
     soup = BeautifulSoup(page_content, 'html.parser')
     soup = soup.find(id="divshow_0")
     IOtable = soup.table.table.findAll('table')[1]
+    # breakpoint()
     df = html_IO_table(IOtable)
     return df

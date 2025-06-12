@@ -39,7 +39,7 @@ class VGHLogin:
             csrf_meta = soup.find('meta', {'name': 'csrf-token'})
             if csrf_meta:
                 self.csrf_token = csrf_meta.get('content')
-                print(f"取得CSRF Token: {self.csrf_token}")
+                # print(f"取得CSRF Token: {self.csrf_token}")
             
             return True
         except requests.RequestException as e:
@@ -111,6 +111,16 @@ class VGHLogin:
             response = self.session.get(url)
             response.raise_for_status()
             return response.text
+        except requests.RequestException as e:
+            print(f"取得頁面失敗: {e}")
+            return None
+
+    def get_img_after_login(self, url):
+        """登入後取得其他頁面"""
+        try:
+            response = self.session.get(url)
+            response.raise_for_status()
+            return response
         except requests.RequestException as e:
             print(f"取得頁面失敗: {e}")
             return None
@@ -269,16 +279,14 @@ def generate_table_report(vgh, doc, ID, row_cells, pat):
     except:
         pass
     
-    # try:
-    #     run = paragraph.add_run()
-    #     TPR_img = get_TPR_img_with_vgh(vgh, ID)
-    #     if TPR_img:
-    #         image_path = 'temp_image.png'
-    #         TPR_img.save(image_path)
-    #         run.add_picture(image_path, width=Inches(1))
-    #         os.remove(image_path)
-    # except:
-    #     pass
+    try:
+        TPR_img = get_TPR_img(vgh, ID)
+        run = paragraph.add_run()
+        image_path = 'downloaded_image.jpg'
+        run.add_picture(image_path, width=Inches(1.5))
+        os.remove(image_path)
+    except:
+        pass
 
     try:
         BW_BL = get_BW_BL(vgh, ID, adminID="all")
@@ -290,7 +298,6 @@ def generate_table_report(vgh, doc, ID, row_cells, pat):
     try:
         assessment_cell = row_cells[1]
         paragraph = assessment_cell.paragraphs[0]
-
         progress_note = get_progress_note(vgh, ID, num=5)
         for i in range(len(progress_note)):
             assessment = progress_note[i]["Assessment"]
@@ -304,6 +311,7 @@ def generate_table_report(vgh, doc, ID, row_cells, pat):
         pass
 
     Lab_cells = row_cells[2]
+    
     try:
         patIO = get_drainage(vgh, ID)
         if not patIO.empty and all(col in patIO.columns for col in ["項目","總量"]):
