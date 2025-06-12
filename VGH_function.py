@@ -192,7 +192,7 @@ def get_progress_note(vgh, ID, num=5):
     rows = table_body.find_all('tr')
     
     prog_note_list = []
-    progress_title = ["Description", "Subjective", "Objective", "Assessment", "Plan"]
+    progress_title = {"病情描述(Description):":"Description", "主觀資料(Subjective):":"Subjective", "客觀資料(Objective):":"Objective", "診斷(Assessment):":"Assessment", "治療計畫(Plan):":"Plan"}
 
     row_idx = 0
     
@@ -202,16 +202,19 @@ def get_progress_note(vgh, ID, num=5):
         if "Note" in row or "Summary" in row:
             progress_note["date"] = row
             row_idx = row_idx + 1
-            for title in progress_title:
+            
+            for title in progress_title.keys():
                 row = rows[row_idx].text
                 while not title in row:
+
                     if row_idx > len(rows) - 2:
                         break
                     row_idx = row_idx + 1
                     row = rows[row_idx].text
                 else:
                     row_idx = row_idx + 1
-                    progress_note[title] = rows[row_idx].pre.text
+                    progress_note[progress_title[title]] = rows[row_idx].pre.text
+
             prog_note_list.append(progress_note)
         if row_idx < len(rows) - 1:    
             row_idx = row_idx + 1
