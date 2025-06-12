@@ -11,7 +11,7 @@ from docx.enum.section import WD_ORIENT
 from PIL import Image
 from docx.oxml.ns import qn
 import os
-from New_Requests_self_function import *
+from VGH_function import *
 from datetime import datetime, timedelta
 import pwinput
 import platform
