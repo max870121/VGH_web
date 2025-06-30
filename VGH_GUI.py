@@ -283,6 +283,26 @@ class VGHPatientGUI:
                                    command=self.search_patients)
         self.search_btn.grid(row=0, column=5, columnspan=4, pady=10)
         
+        # 進階設定區域（可收合）
+        
+        self.advanced_expanded = tk.BooleanVar(value=False)
+        advanced_header_frame = tk.Frame(self.root, bg='#f0f0f0')
+        advanced_header_frame.pack(fill='x', padx=10, pady=(5, 0))
+        
+        self.advanced_toggle_btn = tk.Button(advanced_header_frame, text="▶ 進階設定", 
+                                            font=('Arial', 11, 'bold'), fg='#2c3e50', bg='#f0f0f0',
+                                            relief='flat', command=self.toggle_advanced_settings)
+        self.advanced_toggle_btn.pack(side='left')
+        
+        # 進階設定內容區域
+        self.advanced_frame = tk.LabelFrame(self.root, text="", font=('Arial', 12, 'bold'),
+                                           fg='#2c3e50', bg='#f0f0f0', bd=1, relief='solid')
+        self.advanced_frame.pack(fill='x', padx=10, pady=5)
+        self.advanced_frame.pack_forget()
+
+        # 建立進階設定內容
+        self.create_advanced_settings()
+        
         # 進度區域
         progress_frame = tk.LabelFrame(self.root, text="處理進度", font=('Arial', 12, 'bold'),
                                       fg='#2c3e50', bg='#f0f0f0')
@@ -296,13 +316,10 @@ class VGHPatientGUI:
         self.progress_bar = ttk.Progressbar(progress_frame, mode='indeterminate')
         self.progress_bar.pack(fill='x', padx=20, pady=(0, 10))
         
-
         # 按鈕區域
         button_frame = tk.Frame(self.root, bg='#f0f0f0')
         button_frame.pack(fill='x', padx=10, pady=5)
         
-
-
         self.generate_btn = tk.Button(button_frame, text="產生Word報告", font=('Arial', 11, 'bold'),
                                      bg='#e74c3c', fg='#f0f0f0', width=15, height=1,
                                      command=self.generate_report, state='disabled')
@@ -312,16 +329,153 @@ class VGHPatientGUI:
             bg='#95a5a6', fg='white', width=10, height=1,
             command=self.clear_results).pack(side='left', padx=5)
         
+        # 結果區域（可收合）
+        self.result_expanded = tk.BooleanVar(value=False)
+        result_header_frame = tk.Frame(self.root, bg='#f0f0f0')
+        result_header_frame.pack(fill='x', padx=10, pady=(5, 0))
         
-
-        # 結果區域
-        result_frame = tk.LabelFrame(self.root, text="處理結果", font=('Arial', 12, 'bold'),
-                                    fg='#2c3e50', bg='#f0f0f0')
-        result_frame.pack(fill='both', expand=True, padx=10, pady=5)
+        self.result_toggle_btn = tk.Button(result_header_frame, text="▶ 處理結果", 
+                                          font=('Arial', 11, 'bold'), fg='#2c3e50', bg='#f0f0f0',
+                                          relief='flat', command=self.toggle_result_area)
+        self.result_toggle_btn.pack(side='left')
         
-        self.result_text = scrolledtext.ScrolledText(result_frame, font=('Arial', 10), 
+        # 結果內容區域
+        self.result_frame = tk.LabelFrame(self.root, text="", font=('Arial', 12, 'bold'),
+                                         fg='#2c3e50', bg='#f0f0f0', bd=1, relief='solid')
+        self.result_frame.pack(fill='both', expand=True, padx=10, pady=(0, 5))
+        
+        self.result_text = scrolledtext.ScrolledText(self.result_frame, font=('Arial', 10), 
                                                     height=8, bg='white')
-        self.result_text.pack(fill='both', expand=True, padx=10, pady=10)
+        self.result_text.pack(fill='x', expand=False, padx=10, pady=10)
+
+    def create_advanced_settings(self):
+        """建立進階設定內容"""
+        # 全選/全不選按鈕
+        control_frame = tk.Frame(self.advanced_frame, bg='#f0f0f0')
+        control_frame.pack(fill='x', padx=10, pady=5)
+        
+        tk.Button(control_frame, text="全選", font=('Arial', 9), bg='#3498db', fg='white',
+                 command=self.select_all_items, width=8).pack(side='left', padx=2)
+        tk.Button(control_frame, text="全不選", font=('Arial', 9), bg='#e74c3c', fg='white',
+                 command=self.deselect_all_items, width=8).pack(side='left', padx=2)
+        tk.Button(control_frame, text="恢復預設", font=('Arial', 9), bg='#f39c12', fg='white',
+                 command=self.reset_to_default, width=8).pack(side='left', padx=2)
+        
+        # 創建滾動區域
+        canvas = tk.Canvas(self.advanced_frame, bg='#f0f0f0', height=200)
+        scrollbar = ttk.Scrollbar(self.advanced_frame, orient="vertical", command=canvas.yview)
+        scrollable_frame = tk.Frame(canvas, bg='#f0f0f0')
+        
+        scrollable_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        )
+        
+        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar.set)
+        
+        # 建立檢查項目變數字典
+        self.lab_vars = {}
+        
+        # 生化項目
+        biochem_frame = tk.LabelFrame(scrollable_frame, text="生化檢驗", font=('Arial', 11, 'bold'),
+                                     bg='#f0f0f0', fg='#2c3e50')
+        biochem_frame.pack(fill='x', padx=5, pady=5)
+        
+        biochem_items = [
+            'TP', 'ALB', 'CA', 'CACAL', 'CHOL', 'BUN', 'UA', 'CREA', 'eGFR(EPI)', 'BILIT',
+            'ALKP', 'LDH', 'ALT', 'AST', 'FIB-4', 'NA', 'K', 'CL', 'GLU', 'IP', 'CK', 'GGT',
+            'HDLC', 'LDLC', 'LDL(計算值)', 'RISKF', 'TG', 'CO2', 'DBILI', 'IRON', 'TIBC',
+            'CKMB', 'CKMB(POCT)', 'TROP', 'TROP(POCT)', 'CRP', 'hs-cTnt', 'CRP(POCT)',
+            'PCT(POCT)', 'eGFR(M)', 'eGFR(PED)', 'eGFR(C-G)未BSA校正', 'eGFR(C-G)BSA校正',
+            'Amylase', 'Lipase', 'Freekappa', 'Freelambda', 'kappa/lambda', 'ESR', 'lactate',
+            'procalcitonin(PCT)', 'Free Ca++', 'Mg', 'Amonia(NH3)', 'NT-ProBNP', 'Intact-PTH',
+            'Myoglobin', 'TSAT', 'Ferritin'
+        ]
+        
+        self.create_checkbox_grid(biochem_frame, biochem_items, 'biochem')
+        
+        # 血球項目
+        hematology_frame = tk.LabelFrame(scrollable_frame, text="血球檢驗", font=('Arial', 11, 'bold'),
+                                        bg='#f0f0f0', fg='#2c3e50')
+        hematology_frame.pack(fill='x', padx=5, pady=5)
+        
+        hematology_items = [
+            'WBC', 'RBC', 'HGB', 'HCT', 'MCV', 'MCH', 'MCHC', 'RDW', 'PLT', 'INR(PT)',
+            'PT', 'APTT', 'BAND', 'SEG', 'LYM', 'MONO', 'EOS', 'BASO', 'D-dimer',
+            'FDP', 'FIBRINOGEN'
+        ]
+        
+        self.create_checkbox_grid(hematology_frame, hematology_items, 'hematology')
+        
+        canvas.pack(side="left", fill="both", expand=True, padx=10, pady=10)
+        scrollbar.pack(side="right", fill="y", pady=10)
+        self.reset_to_default()
+        
+    def create_checkbox_grid(self, parent, items, category):
+        """建立複選框網格"""
+        for i, item in enumerate(items):
+            var = tk.BooleanVar(value=False)  # 預設全選
+            self.lab_vars[f"{category}_{item}"] = var
+            
+            cb = tk.Checkbutton(parent, text=item, variable=var, font=('Arial', 9),
+                               bg='#f0f0f0', anchor='w')
+            row = i // 6  # 每行6個
+            col = i % 6
+            cb.grid(row=row, column=col, sticky='w', padx=5, pady=2)
+    
+    def toggle_advanced_settings(self):
+        """切換進階設定區域顯示/隱藏"""
+        if self.advanced_expanded.get():
+            self.advanced_frame.pack_forget()
+            self.advanced_toggle_btn.config(text="▶ 進階設定")
+            self.advanced_expanded.set(False)
+        else:
+            self.advanced_frame.pack(fill='x', padx=10, pady=(0, 5))
+            self.advanced_toggle_btn.config(text="▼ 進階設定")
+            self.advanced_expanded.set(True)
+        self.root.update_idletasks()
+    
+    def toggle_result_area(self):
+        """切換結果區域顯示/隱藏"""
+        if self.result_expanded.get():
+            self.result_frame.pack_forget()
+            self.result_toggle_btn.config(text="▶ 處理結果")
+            self.result_expanded.set(False)
+        else:
+            self.result_frame.pack(fill='both', expand=True, padx=10, pady=(0, 5))
+            self.result_toggle_btn.config(text="▼ 處理結果")
+            self.result_expanded.set(True)
+    
+    def select_all_items(self):
+        """全選所有檢驗項目"""
+        for var in self.lab_vars.values():
+            var.set(True)
+    
+    def deselect_all_items(self):
+        """取消選擇所有檢驗項目"""
+        for var in self.lab_vars.values():
+            var.set(False)
+    
+    def reset_to_default(self):
+        self.deselect_all_items()
+        """恢復預設選擇（全選）"""
+        Default=["NA", "K", "BUN", "CREA", "ALT", "BILIT", "CRP", "WBC","HGB","PLT","SEG","PT","APTT"]
+        for key, var in self.lab_vars.items():
+            key=key.split("_")[1]
+            if key in Default:
+                var.set(True)
+    
+    def get_selected_lab_items(self):
+        """取得已選擇的檢驗項目"""
+        selected = {}
+        for key, var in self.lab_vars.items():
+            if var.get():
+                category, item = key.split('_', 1)
+                if category not in selected:
+                    selected[category] = []
+                selected[category].append(item)
+        return selected
         
         
     
@@ -457,8 +611,7 @@ class VGHPatientGUI:
         else:
             self.result_text.insert(tk.END, "❌ 未找到符合條件的病人資料\n")
         
-        self.result_text.see(tk.END)
-    
+        self.result_text.see(tk.END)   
     
     def search_failed(self, error_msg):
         """搜尋失敗處理"""
